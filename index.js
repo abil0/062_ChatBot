@@ -47,7 +47,7 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     const reader = response.body.getReader();
-    const decoder = new TextDecoder;
+    const decoder = new TextDecoder();
 
     let buffer = '';
 
@@ -55,48 +55,53 @@ app.post('/api/chat', async (req, res) => {
       const { done, value } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true 
-      });
+      buffer += decoder.decode(value, { stream: true });
 
       const lines = buffer.split('\n');
-      buffer = lines.pop(); 
+      buffer = lines.pop();
 
-        for (const line of lines) {
+      for (const line of lines) {
+        const trimmedLine = line.trim();
 
-            const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
 
-            if (!trimmedLine) {continue;
-            }
+        if (!trimmedLine.startsWith('data: ')) continue;
 
-            if (!trimmedLine.startsWith('data: ')) {
-                continue;}
+        const data = trimmedLine.slice(5).trim();
 
-            const data = trimmedLine.slice(5).trim();
+        if (data === '[DONE]') continue;
 
-            if (data === '[DONE]') {
-                continue;
-            }
+        try {
+          const json = JSON.parse(data);
+          const content = json.choices?.[0]?.delta?.content;
 
-            const json = JSON.parse(data);
-            const content = 
-            json.choices[0].delta.content;
+          if (content) {
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        } catch (error) {
+          console.error('Gagal parsing streaming data:', error);
+        }
+      }
+    }
 
-            if (content) {
-                res.write(`data: ${JSON.stringify({ content })}\n\n`);
-            }
-        }cacth (error) {
-        console.error('Gagal parsing streaming data:', 
-            error
-             );
-         }
-    }   
-}
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error) {
+    console.error('SERVER ERROR:', error);
 
-ress.write("data: [DONE]\n\n");
-res.end();
-} cacth (error) {
-    console.error('SERVER ERORR:', error);
-}
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Terjadi kesalahan pada server' });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: 'Terjadi kesalahan pada server' })}\n\n`);
+      res.end();
+    }
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server berjalan di http://localhost:${port}`);
+});
+
 
 
   
