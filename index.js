@@ -23,14 +23,18 @@ app.post('/api/chat', async (req, res) => {
     }
 }
 
-const response = await fetch('https://api.openrouter.ai/v1/chat/completions', {
+const response = await fetch('https://api.GEMINI.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GEMINI_API_KEY}'
+        'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
     },
     body: JSON.stringify({
         model: 'gemini-1.5-turbo',
         messages: message,
     }),
 });
+
+if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error from GEMINI API:', errorData);
