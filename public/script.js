@@ -47,10 +47,14 @@ chatForm.addEventListener("submit", async (event) => {
             body: JSON.stringify({ messages })
         });
 
-        if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(errorData?.error || "Terjadi kesalahan");
-        }
+      if (!response.ok) {
+    let message = "Terjadi kesalahan";
+    try {
+        const errorData = await response.json();
+        message = errorData?.error || errorData?.message || message;
+    } catch {}
+    throw new Error(message);
+}
 
         if (!response.body) {
             throw new Error("Response body tidak tersedia");
