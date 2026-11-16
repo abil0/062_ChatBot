@@ -14,36 +14,32 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-    try {
-        const { message } = req.body;
+  try {
+    const { message } = req.body;
 
-        if (!message || !Array.isArray(message)) 
-            { return res.status(400).json({ error: 'Message harus berupa array' }); 
-    });
+    if (!message || !Array.isArray(message)) {
+      return res.status(400).json({ error: 'Message harus berupa array' });
     }
-}
 
-const response = await fetch('https://api.GEMINI.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
+    const response = await fetch('https://api.gemini.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
-    },
-    body: JSON.stringify({
+        Authorization: `Bearer ${process.env.GEMINI_API_KEY}`
+      },
+      body: JSON.stringify({
         model: 'gemini-1.5-turbo',
         messages: message,
         temperature: 0.7,
         max_tokens: 150,
         stream: true
-    }),
-});
+      })
+    });
 
-if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Error from GEMINI API:', errorData);
-        return res.status(500).json({ 
-            error: errorData 
-        });
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Error from GEMINI API:', errorData);
+      return res.status(500).json({ error: errorData });
     }
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -52,3 +48,13 @@ if (!response.ok) {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder;
+
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+  
+    
