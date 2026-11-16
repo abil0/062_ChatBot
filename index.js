@@ -23,30 +23,33 @@ app.post('/api/chat', async (req, res) => {
         .json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return res
         .status(500)
-        .json({ error: 'OPENROUTER_API_KEY belum diset di file .env' });
+        .json({ error: 'GEMINI_API_KEY belum diset di file .env' });
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-001',
-        messages,
-        temperature: 0.7,
-        max_tokens: 500,
-        stream: true
-      })
-    });
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gemini-2.5-flash',
+          messages,
+          temperature: 0.7,
+          max_tokens: 1000,
+          stream: true
+        })
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Error dari API:', response.status, errorText);
+      console.error('Error dari Gemini API:', response.status, errorText);
       return res
         .status(response.status)
         .json({ error: `API error (${response.status}). Cek log server.` });
