@@ -13,6 +13,52 @@ app.get('/', (req, res) => {
   res.redirect('/index.html');
 });
 
+// Urutan model: kalau satu overload/tidak ada, otomatis coba model berikutnya
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function callGemini(messages) {
+  let lastResponse;
+
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.GEMINI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.7,
+            max_tokens: 1000,
+            stream: true
+          })
+        }
+      );
+
+      if (response.ok) return response;
+      lastResponse = response;
+
+      console.error(`Gemini ${model} gagal (percobaan ${attempt + 1}):`, response.status);
+
+      // Model tidak ditemukan: langsung pindah ke model berikutnya
+      if (response.status === 404) break;
+
+      // Error selain overload/limit (mis. 401, 400): jangan diulang
+      if (![429, 500, 503].includes(response.status)) return response;
+
+      // Overload: tunggu 1 detik lalu coba lagi
+      await sleep(1000);
+    }
+  }
+
+  return lastResponse;
+}
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body;
@@ -29,30 +75,18 @@ app.post('/api/chat', async (req, res) => {
         .json({ error: 'GEMINI_API_KEY belum diset di file .env' });
     }
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'gemini-3.8-flash',
-          messages,
-          temperature: 0.7,
-          max_tokens: 1000,
-          stream: true
-        })
-      }
-    );
+    const response = await callGemini(messages);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Error dari Gemini API:', response.status, errorText);
-      return res
-        .status(response.status)
-        .json({ error: `API error (${response.status}). Cek log server.` });
+
+      const friendly =
+        response.status === 503 || response.status === 429
+          ? 'Server AI sedang sibuk. Coba kirim ulang beberapa saat lagi.'
+          : `API error (${response.status}). Cek log server.`;
+
+      return res.status(response.status).json({ error: friendly });
     }
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -108,3 +142,5 @@ app.post('/api/chat', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
 });
+
+module.exports = app;
