@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 });
 
 // Urutan model: kalau satu overload/tidak ada, otomatis coba model berikutnya
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+const MODELS = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function callGemini(messages) {
@@ -34,7 +34,7 @@ async function callGemini(messages) {
             model,
             messages,
             temperature: 0.7,
-            max_tokens: 1000,
+            max_tokens: 2000,
             stream: true
           })
         }
