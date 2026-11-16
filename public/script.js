@@ -44,5 +44,51 @@ try {
 
     if (!response.ok) {
       const errorData = await response.text();
-      throw new Error
+      throw new Error(
+      errorData.error ||"Terjadi kesalahan"
+      );
     }
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let buffer = "";
+
+while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+        break;
+    }
+
+    buffer += decoder.decode(value, {
+         stream: true });
+
+         const lines = buffer.split("\n");
+            buffer = lines.pop();
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) {continue;}
+                if (!trimmedLine.startsWith("data: ")) {continue;}
+                constdata = trimmedLine.slice(5).trim();
+                if (data === "[DONE]") {continue;}
+                try{
+                    const token = JSON.parse(data);
+                    botResponse += token;
+                    botcontent.textContent = botResponse;
+                    chatBox.scrollTop = chatBox.scrollHeight; 
+                } catch (error) {
+                    console.error("Error parsing token:", error);
+                }
+            }
+        }
+
+    } messages.push({ role: "assistant", content: botResponse });
+    cacth (error) {
+        console.error("Error:", error);
+        botcontent.textContent = "Terjadi kesalahan. Silakan coba lagi.";
+    } finally {
+        userInput.disabled = false;
+        button.disabled = false;
+        button.textContent = "Kirim";
+        userInput.focus();
+    }
+});
