@@ -92,7 +92,11 @@ app.post('/api/chat', async (req, res) => {
     }   
 }
 
-
+ress.write("data: [DONE]\n\n");
+res.end();
+} cacth (error) {
+    console.error('SERVER ERORR:', error);
+}
 
 
   
