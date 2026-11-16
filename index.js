@@ -32,9 +32,16 @@ const response = await fetch('https://api.GEMINI.ai/v1/chat/completions', {
     body: JSON.stringify({
         model: 'gemini-1.5-turbo',
         messages: message,
+        temperature: 0.7,
+        max_tokens: 150,
+        stream: true
     }),
 });
 
 if (!response.ok) {
         const errorData = await response.text();
         console.error('Error from GEMINI API:', errorData);
+        return res.status(500).json({ 
+            error: errorData 
+        });
+    }
