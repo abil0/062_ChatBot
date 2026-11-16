@@ -1,0 +1,165 @@
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Container Chatbox (#chat-box) */
+#chat-box {
+    width: 100%;
+    max-width: 600px;
+    height: 70vh;
+    background-color: #ffffff;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    scroll-behavior: smooth;
+}
+
+/* Kustomisasi Scrollbar untuk #chat-box */
+#chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-box::-webkit-scrollbar-track {
+    background: #f9fafb;
+}
+
+#chat-box::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* Baris Pesan (.message) */
+.message {
+    display: flex;
+    width: 100%;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Posisi pesan berdasarkan pengirim (.user vs .bot) */
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.bot {
+    justify-content: flex-start;
+}
+
+/* Gelembung Pesan (.message-content) */
+.message-content {
+    max-width: 78%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap; /* Menjaga baris baru dari respons AI */
+}
+
+/* Warna & sudut gelembung pesan User */
+.message.user .message-content {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+
+/* Warna & sudut gelembung pesan Bot */
+.message.bot .message-content {
+    background-color: #f3f4f6;
+    color: #1f2937;
+    border-bottom-left-radius: 4px;
+}
+
+/* Indikator ketika pesan bot masih kosong (sedang menunggu stream) */
+.message.bot .message-content:empty::before {
+    content: "Mengetik...";
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Form Input (#chat-form) */
+#chat-form {
+    width: 100%;
+    max-width: 600px;
+    background-color: #ffffff;
+    padding: 15px 20px;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 10px;
+}
+
+/* Kolom Input Teks (#user-input) */
+#user-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#user-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+#user-input:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Tombol Kirim (button di dalam #chat-form) */
+#chat-form button {
+    padding: 12px 24px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+#chat-form button:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+#chat-form button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+}
+
+/* Animasi munculnya pesan baru */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
