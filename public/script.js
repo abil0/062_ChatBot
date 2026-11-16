@@ -41,20 +41,22 @@ chatForm.addEventListener("submit", async (event) => {
     try {
         const response = await fetch("/api/chat", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages })
         });
 
-      if (!response.ok) {
-    let message = "Terjadi kesalahan";
-    try {
-        const errorData = await response.json();
-        message = errorData?.error || errorData?.message || message;
-    } catch {}
-    throw new Error(message);
-}
+        if (!response.ok) {
+            let message = `Terjadi kesalahan (${response.status})`;
+            try {
+                const errorData = await response.json();
+                message =
+                    errorData?.error?.message ||
+                    errorData?.error ||
+                    errorData?.message ||
+                    message;
+            } catch {}
+            throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+        }
 
         if (!response.body) {
             throw new Error("Response body tidak tersedia");
@@ -74,29 +76,44 @@ chatForm.addEventListener("submit", async (event) => {
 
             for (const line of lines) {
                 const trimmedLine = line.trim();
-                if (!trimmedLine || !trimmedLine.startsWith("data: ")) continue;
+                if (!trimmedLine || !trimmedLine.startsWith("data:")) continue;
 
                 const data = trimmedLine.slice(5).trim();
                 if (data === "[DONE]") continue;
 
                 try {
                     const payload = JSON.parse(data);
-                    const token = payload.choices?.[0]?.delta?.content ?? payload.choices?.[0]?.message?.content ?? "";
+
+                    if (payload.error) {
+                        throw new Error(payload.error);
+                    }
+
+                    const token = payload.content ?? "";
                     if (!token) continue;
 
                     botResponse += token;
                     botContent.textContent = botResponse;
                     chatbox.scrollTop = chatbox.scrollHeight;
                 } catch (error) {
-                    console.error("Error parsing token:", error);
+                    if (error instanceof SyntaxError) {
+                        console.error("Error parsing token:", error);
+                    } else {
+                        throw error;
+                    }
                 }
             }
         }
 
-        messages.push({ role: "assistant", content: botResponse });
+        if (botResponse) {
+            messages.push({ role: "assistant", content: botResponse });
+        } else {
+            messages.pop();
+            botContent.textContent = "Tidak ada balasan dari AI. Coba lagi.";
+        }
     } catch (error) {
         console.error("Error:", error);
-        botContent.textContent = "Terjadi kesalahan. Silakan coba lagi.";
+        if (messages[messages.length - 1]?.role === "user") messages.pop();
+        botContent.textContent = error.message || "Terjadi kesalahan. Silakan coba lagi.";
     } finally {
         userInput.disabled = false;
         button.disabled = false;

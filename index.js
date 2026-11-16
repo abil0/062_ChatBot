@@ -15,31 +15,41 @@ app.get('/', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { messages } = req.body;
 
-    if (!message || !Array.isArray(message)) {
-      return res.status(400).json({ error: 'Message harus berupa array' });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'messages harus berupa array dan tidak boleh kosong' });
     }
 
-    const response = await fetch('https://api.gemini.ai/v1/chat/completions', {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res
+        .status(500)
+        .json({ error: 'OPENROUTER_API_KEY belum diset di file .env' });
+    }
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'Gemini 2.0',
-        messages: message,
+        model: 'google/gemini-2.0-flash-001',
+        messages,
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: 500,
         stream: true
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Error from GEMINI API:', errorData);
-      return res.status(500).json({ error: errorData });
+      const errorText = await response.text();
+      console.error('Error dari API:', response.status, errorText);
+      return res
+        .status(response.status)
+        .json({ error: `API error (${response.status}). Cek log server.` });
     }
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -48,7 +58,6 @@ app.post('/api/chat', async (req, res) => {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-
     let buffer = '';
 
     while (true) {
@@ -56,19 +65,14 @@ app.post('/api/chat', async (req, res) => {
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-
       const lines = buffer.split('\n');
       buffer = lines.pop();
 
       for (const line of lines) {
         const trimmedLine = line.trim();
-
-        if (!trimmedLine) continue;
-
-        if (!trimmedLine.startsWith('data: ')) continue;
+        if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
 
         const data = trimmedLine.slice(5).trim();
-
         if (data === '[DONE]') continue;
 
         try {
@@ -101,8 +105,3 @@ app.post('/api/chat', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
 });
-
-
-
-  
-    

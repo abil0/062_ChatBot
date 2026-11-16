@@ -1,3 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
+
+:root {
+    --bg-main: #090d16;
+    --bg-terminal: #0f172a;
+    --bg-header: #1e293b;
+    --border-cli: #334155;
+    --user-color: #38bdf8;   /* Cyan untuk User */
+    --bot-color: #4ade80;    /* Neon Green untuk Bot */
+    --accent-warn: #f59e0b;  /* Amber untuk status Loading */
+    --text-muted: #64748b;
+}
 
 * {
     box-sizing: border-box;
@@ -6,8 +18,11 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    background-color: var(--bg-main);
+    background-image: 
+        radial-gradient(circle at 50% 50%, #1e293b 0%, #090d16 100%);
+    color: var(--bot-color);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -16,150 +31,248 @@ body {
     padding: 20px;
 }
 
-/* Container Chatbox (#chat-box) */
+/* Efek garis layar monitor CRT halus */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 99;
+}
+
+/* Container Chatbox (#chat-box) dengan Header Terminal */
 #chat-box {
     width: 100%;
-    max-width: 600px;
-    height: 70vh;
-    background-color: #ffffff;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    padding: 20px;
+    max-width: 780px;
+    height: 75vh;
+    background-color: rgba(15, 23, 42, 0.92);
+    border: 1px solid var(--border-cli);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 15px rgba(74, 222, 128, 0.05);
+    padding: 56px 24px 20px 24px; /* Ruang di atas untuk bar terminal */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    border-bottom: 1px solid #e5e7eb;
+    gap: 16px;
+    position: relative;
     scroll-behavior: smooth;
+    backdrop-filter: blur(8px);
 }
 
-/* Kustomisasi Scrollbar untuk #chat-box */
+/* Header Bar Terminal (Otomatis via CSS Pseudo-element) */
+#chat-box::before {
+    content: "● ● ●   bash — ai-chat-cli — 80x24";
+    position: sticky;
+    top: -56px;
+    left: 0;
+    right: 0;
+    margin: -56px -24px 16px -24px;
+    padding: 12px 20px;
+    background-color: var(--bg-header);
+    border-bottom: 1px solid var(--border-cli);
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    z-index: 10;
+    display: block;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar ala Terminal */
 #chat-box::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 #chat-box::-webkit-scrollbar-track {
-    background: #f9fafb;
+    background: var(--bg-terminal);
 }
 
 #chat-box::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 10px;
+    background-color: var(--border-cli);
+    border-radius: 2px;
 }
 
-/* Baris Pesan (.message) */
+#chat-box::-webkit-scrollbar-thumb:hover {
+    background-color: var(--bot-color);
+}
+
+/* Baris Pesan (.message) - Rata kiri semua seperti log terminal */
 .message {
     display: flex;
     width: 100%;
-    animation: fadeIn 0.2s ease-in-out;
+    padding: 6px 10px;
+    border-left: 2px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    animation: typeIn 0.15s ease-out;
 }
 
-/* Posisi pesan berdasarkan pengirim (.user vs .bot) */
-.message.user {
-    justify-content: flex-end;
+/* Efek interaktif saat baris log di-hover */
+.message:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left-color: var(--border-cli);
 }
 
-.message.bot {
-    justify-content: flex-start;
-}
-
-/* Gelembung Pesan (.message-content) */
+/* Konten Teks (.message-content) */
 .message-content {
-    max-width: 78%;
-    padding: 12px 16px;
-    border-radius: 16px;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    width: 100%;
+    font-size: 0.92rem;
+    line-height: 1.65;
     word-wrap: break-word;
-    white-space: pre-wrap; /* Menjaga baris baru dari respons AI */
+    white-space: pre-wrap;
 }
 
-/* Warna & sudut gelembung pesan User */
+/* Styling & Prefix Prompt untuk USER */
 .message.user .message-content {
-    background-color: #2563eb;
-    color: #ffffff;
-    border-bottom-right-radius: 4px;
+    color: var(--user-color);
 }
 
-/* Warna & sudut gelembung pesan Bot */
+.message.user .message-content::before {
+    content: "guest@local:~$ ";
+    color: #f472b6; /* Pink/Magenta untuk host user */
+    font-weight: 600;
+    user-select: none;
+}
+
+/* Styling & Prefix Prompt untuk BOT */
 .message.bot .message-content {
-    background-color: #f3f4f6;
-    color: #1f2937;
-    border-bottom-left-radius: 4px;
+    color: var(--bot-color);
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.2);
 }
 
-/* Indikator ketika pesan bot masih kosong (sedang menunggu stream) */
-.message.bot .message-content:empty::before {
-    content: "Mengetik...";
-    color: #9ca3af;
-    font-style: italic;
+.message.bot .message-content::before {
+    content: "ai@system:~# ";
+    color: var(--accent-warn);
+    font-weight: 600;
+    user-select: none;
 }
 
-/* Form Input (#chat-form) */
+/* Saat Bot baru di-append dan masih kosong (menunggu stream) */
+.message.bot .message-content:empty::after {
+    content: "memproses_respon█";
+    color: var(--text-muted);
+    animation: blink 0.8s steps(2, start) infinite;
+}
+
+/* Kursor blok berkedip pada pesan terakhir Bot */
+.message.bot:last-child .message-content:not(:empty)::after {
+    content: "█";
+    margin-left: 4px;
+    color: var(--bot-color);
+    animation: blink 1s steps(2, start) infinite;
+}
+
+/* Area Input Command Line (#chat-form) */
 #chat-form {
     width: 100%;
-    max-width: 600px;
-    background-color: #ffffff;
-    padding: 15px 20px;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    max-width: 780px;
+    background-color: var(--bg-header);
+    border: 1px solid var(--border-cli);
+    border-radius: 0 0 10px 10px;
+    padding: 12px 18px;
     display: flex;
-    gap: 10px;
-}
-
-/* Kolom Input Teks (#user-input) */
-#user-input {
-    flex: 1;
-    padding: 12px 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    outline: none;
+    align-items: center;
+    gap: 12px;
+    position: relative;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#user-input:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+/* Efek menyala saat form sedang aktif diketik */
+#chat-form:focus-within {
+    border-color: var(--bot-color);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
+}
+
+/* Simbol Prompt '>' di depan input */
+#chat-form::before {
+    content: "❯";
+    color: var(--bot-color);
+    font-size: 1.1rem;
+    font-weight: bold;
+    animation: pulsePrompt 2s infinite;
+}
+
+/* Kolom Input (#user-input) */
+#user-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    caret-color: var(--bot-color);
+}
+
+#user-input::placeholder {
+    color: var(--text-muted);
 }
 
 #user-input:disabled {
-    background-color: #f9fafb;
-    color: #9ca3af;
+    color: var(--text-muted);
     cursor: not-allowed;
 }
 
-/* Tombol Kirim (button di dalam #chat-form) */
+/* Tombol Eksekusi Perintah (#chat-form button) */
 #chat-form button {
-    padding: 12px 24px;
-    background-color: #2563eb;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
+    background-color: transparent;
+    color: var(--bot-color);
+    border: 1px solid var(--bot-color);
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s;
-    white-space: nowrap;
+    transition: all 0.15s ease;
 }
 
+/* Efek Hover & Klik pada Tombol */
 #chat-form button:hover:not(:disabled) {
-    background-color: #1d4ed8;
+    background-color: var(--bot-color);
+    color: var(--bg-main);
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+    transform: translateY(-1px);
 }
 
+#chat-form button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+/* Saat status "Loading..." (disabled) */
 #chat-form button:disabled {
-    background-color: #93c5fd;
-    cursor: not-allowed;
+    border-color: var(--accent-warn);
+    color: var(--accent-warn);
+    cursor: wait;
+    animation: blink 1.2s infinite;
 }
 
-/* Animasi munculnya pesan baru */
-@keyframes fadeIn {
+/* Keyframes Animasi */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes pulsePrompt {
+    0%, 100% { transform: translateX(0); opacity: 1; }
+    50% { transform: translateX(3px); opacity: 0.7; }
+}
+
+@keyframes typeIn {
     from {
         opacity: 0;
-        transform: translateY(5px);
+        transform: translateX(-6px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
 }
